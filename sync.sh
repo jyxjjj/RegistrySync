@@ -20,6 +20,22 @@ IMAGES=(
     "docker.io adguard/adguardhome latest v0.107.64"
 )
 
+function syncImageTag() {
+    REGISTRY=$1
+    IMAGE_NAME=$2
+    IMAGE_TAG=$3
+    echo "================================================================"
+    echo -e "\033[34mSyncing $IMAGE_NAME:$IMAGE_TAG...\033[0m"
+    skopeo copy \
+        --dest-precompute-digests \
+        --preserve-digests \
+        --retry-times 10 \
+        --override-arch amd64 --override-os linux \
+        docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG docker://$DESTINATION_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+    echo -e "\033[32mSuccessfully synced $IMAGE_NAME:$IMAGE_TAG\033[0m"
+    echo "================================================================"
+}
+
 function syncImage() {
     REGISTRY=$1
     IMAGE_NAME=$2
