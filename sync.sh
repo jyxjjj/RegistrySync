@@ -2,6 +2,11 @@
 
 set -e
 
+if [ -z "$REGISTRY_URL" ]; then
+  echo "Error: REGISTRY_URL 环境变量未设置！"
+  exit 1
+fi
+
 echo "Installing skopeo..."
 brew install skopeo
 skopeo --version
@@ -102,7 +107,6 @@ function checkAndSyncImage() {
 for IMAGE in "${IMAGES[@]}"; do
     # 检查并同步镜像
     IFS=' ' read -r REGISTRY IMAGE_NAME IMAGE_TAG IMAGE_VERSION <<<"$IMAGE"
-    echo "Processing image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG (version: $IMAGE_VERSION)"
     checkAndSyncImage $REGISTRY $IMAGE_NAME $IMAGE_TAG $IMAGE_VERSION
 done
 #endregion
