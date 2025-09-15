@@ -15,6 +15,8 @@ echo "Start sync..."
 
 DESTINATION_REGISTRY=$REGISTRY_URL
 
+# 2025-09-15 13:08
+
 IMAGES=(
     "docker.io library/fedora latest 42"
     "docker.io library/mariadb lts 11.8.2"
