@@ -19,12 +19,12 @@ DESTINATION_REGISTRY=$REGISTRY_URL
 
 IMAGES=(
     "docker.io library/fedora latest 42"
-    "docker.io library/mariadb lts 11.8.2"
-    "docker.io library/redis latest 8.2.0"
-    "docker.io library/postgres latest 17.5"
-    "docker.io dpage/pgadmin4 latest 9.6.0"
-    "docker.io openlistteam/openlist latest v4.1.0"
-    "docker.io adguard/adguardhome latest v0.107.64"
+    "docker.io library/mariadb lts 11.8.3"
+    "docker.io library/redis latest 8.2.1"
+    "docker.io library/postgres latest 17.6"
+    "docker.io dpage/pgadmin4 latest 9.8.0"
+    "docker.io openlistteam/openlist latest v4.1.2"
+    "docker.io adguard/adguardhome latest v0.107.65"
 )
 
 function syncImageTag() {
@@ -113,4 +113,4 @@ for IMAGE in "${IMAGES[@]}"; do
 done
 #endregion
 
-echo "Successfully synced all images."
+echo "Job completed."
