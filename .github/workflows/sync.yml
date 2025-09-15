@@ -1,8 +1,9 @@
 name: sync
 
 on:
-    schedule:
-        - cron: "0 0 * * *"
+    push:
+        branches:
+            - main
     workflow_dispatch:
 
 jobs:
@@ -12,6 +13,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Run Main
+              env:
+                  REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
               run: |
-                    sudo chmod +x sync.sh
-                    ./sync.sh
+                  sudo chmod +x sync.sh
+                  ./sync.sh
