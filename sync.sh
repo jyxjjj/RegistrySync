@@ -108,15 +108,15 @@ function checkAndSyncImage() {
 
 #region STARTUP
 for IMAGE in "${IMAGES[@]}"; do
-    set -- $img
+    set -- $IMAGE
     count=$#
     if [ $count -eq 4 ]; then
-
         # 检查并同步镜像
         IFS=' ' read -r REGISTRY IMAGE_NAME IMAGE_TAG IMAGE_VERSION <<<"$IMAGE"
         checkAndSyncImage $REGISTRY $IMAGE_NAME $IMAGE_TAG $IMAGE_VERSION
     fi
     if [ $count -eq 3 ]; then
+        # 仅同步镜像
         IFS=' ' read -r REGISTRY IMAGE_NAME IMAGE_TAG <<<"$IMAGE"
         syncImageTag $REGISTRY $IMAGE_NAME $IMAGE_TAG
     fi
