@@ -3,8 +3,8 @@
 set -e
 
 if [ -z "$REGISTRY_URL" ]; then
-  echo "Error: REGISTRY_URL 环境变量未设置！"
-  exit 1
+    echo "Error: REGISTRY_URL 环境变量未设置！"
+    exit 1
 fi
 
 echo "Installing skopeo..."
@@ -23,7 +23,8 @@ IMAGES=(
     "docker.io library/redis latest 8.2.1"
     "docker.io library/postgres latest 17.6"
     "docker.io dpage/pgadmin4 latest 9.8.0"
-    "docker.io openlistteam/openlist latest v4.1.2"
+    "docker.io openlistteam/openlist beta"
+    "docker.io openlistteam/openlist v4.1.3"
     "docker.io adguard/adguardhome latest v0.107.65"
 )
 
@@ -107,9 +108,18 @@ function checkAndSyncImage() {
 
 #region STARTUP
 for IMAGE in "${IMAGES[@]}"; do
-    # 检查并同步镜像
-    IFS=' ' read -r REGISTRY IMAGE_NAME IMAGE_TAG IMAGE_VERSION <<<"$IMAGE"
-    checkAndSyncImage $REGISTRY $IMAGE_NAME $IMAGE_TAG $IMAGE_VERSION
+    set -- $img
+    count=$#
+    if [ $count -eq 4 ]; then
+
+        # 检查并同步镜像
+        IFS=' ' read -r REGISTRY IMAGE_NAME IMAGE_TAG IMAGE_VERSION <<<"$IMAGE"
+        checkAndSyncImage $REGISTRY $IMAGE_NAME $IMAGE_TAG $IMAGE_VERSION
+    fi
+    if [ $count -eq 3 ]; then
+        IFS=' ' read -r REGISTRY IMAGE_NAME IMAGE_TAG <<<"$IMAGE"
+        syncImageTag $REGISTRY $IMAGE_NAME $IMAGE_TAG
+    fi
 done
 #endregion
 
