@@ -21,11 +21,11 @@ IMAGES=(
     "docker.io library/fedora latest 42"
     "docker.io library/mariadb lts 11.8.3"
     "docker.io library/redis latest 8.2.1"
-    "docker.io library/postgres latest 17.6"
+    "docker.io library/postgres latest 18.0"
     "docker.io dpage/pgadmin4 latest 9.8.0"
     "docker.io openlistteam/openlist beta"
     "docker.io openlistteam/openlist v4.1.3"
-    "docker.io adguard/adguardhome latest v0.107.65"
+    "docker.io adguard/adguardhome latest v0.107.66"
 )
 
 function syncImageTag() {
