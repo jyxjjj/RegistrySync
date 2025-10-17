@@ -55,7 +55,7 @@ class Sync extends Command
                     break;
                 default:
                     $this->ansiError("Invalid image configuration: $image");
-                    echo str_repeat('-', 64) . "\n";
+                    echo str_repeat('=', 64) . "\n";
                     return self::INVALID;
             }
             echo str_repeat('=', 64) . "\n";
@@ -66,22 +66,29 @@ class Sync extends Command
 
     private function ansiError(string $message): void
     {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
         $formatted = "[$time] \033[31m$message\033[0m\n";
         fwrite(STDERR, $formatted);
     }
 
     private function ansiInfo(string $message): void
     {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
         $formatted = "[$time] \033[34m$message\033[0m\n";
         fwrite(STDOUT, $formatted);
     }
 
     private function ansiSuccess(string $message): void
     {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
         $formatted = "[$time] \033[32m$message\033[0m\n";
+        fwrite(STDOUT, $formatted);
+    }
+
+    private function echo(string $message): void
+    {
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
+        $formatted = "[$time] $message\n";
         fwrite(STDOUT, $formatted);
     }
 
@@ -226,8 +233,7 @@ class Sync extends Command
             $this->ansiError("Failed to sync image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         }
         $end = Carbon::now();
-        $duration = $start->diffInSeconds($end);
-        $time = $end->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
-        echo "[$time] $IMAGE_NAME:$IMAGE_TAG took $duration seconds";
+        $duration = $start->diffInMilliseconds($end);
+        $this->echo("Sync completed, duration: {$duration} ms");
     }
 }
