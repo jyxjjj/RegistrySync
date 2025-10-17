@@ -71,7 +71,8 @@ class Sync extends Command
 
     private function ansiOutput(string $message, string $colorCode, bool $useStderr = false): void
     {
-        $formatted = "\033[{$colorCode}m{$message}\033[0m\n";
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        $formatted = "[$time] \033[{$colorCode}m{$message}\033[0m\n";
         if ($useStderr) {
             fwrite(STDERR, $formatted);
         } else {
