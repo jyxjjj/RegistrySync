@@ -198,7 +198,7 @@ class Sync extends Command
     {
         echo "> skopeo $args\n";
         $args = explode(' ', "skopeo $args");
-        $command = Process::newPendingProcess();
+        $command = Process::newPendingProcess()->timeout(1800);
         $result = $command->run($args, function (string $type, string $buffer) use ($args) {
             if ($args[1] == 'copy') {
                 if ($type === 'stdout') {
