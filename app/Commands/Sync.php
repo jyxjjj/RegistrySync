@@ -200,16 +200,21 @@ class Sync extends Command
     {
         echo "> skopeo $args\n";
         $args = explode(' ', "skopeo $args");
-        $command = Process::newPendingProcess()->timeout(1800);
-        $result = $command->run($args, function (string $type, string $buffer) use ($args) {
-            if ($args[1] == 'copy') {
-                if ($type === 'stdout') {
-                    fwrite(STDOUT, $buffer);
-                } else {
-                    fwrite(STDERR, $buffer);
+        try {
+            $command = Process::newPendingProcess()->timeout(300);
+            $result = $command->run($args, function (string $type, string $buffer) use ($args) {
+                if ($args[1] == 'copy') {
+                    if ($type === 'stdout') {
+                        fwrite(STDOUT, $buffer);
+                    } else {
+                        fwrite(STDERR, $buffer);
+                    }
                 }
-            }
-        });
+            });
+        } catch (Throwable $e) {
+            $this->ansiError("Error executing skopeo command: " . $e->getMessage());
+            return Process::run('exit 1');
+        }
         return $result;
     }
 
