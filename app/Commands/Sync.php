@@ -47,7 +47,8 @@ class Sync extends Command
                 case 4:
                     [$REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION] = $D;
                     if ($this->checkImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION)) {
-                        $this->syncImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION);
+                        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
+                        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_VERSION);
                     } else {
                         $this->ansiError("Failed to sync $IMAGE_NAME");
                     }
@@ -65,28 +66,23 @@ class Sync extends Command
 
     private function ansiError(string $message): void
     {
-        $this->ansiOutput($message, '31', true);
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        $formatted = "[$time] \033[31m$message\033[0m\n";
+        fwrite(STDERR, $formatted);
     }
 
     private function ansiInfo(string $message): void
     {
-        $this->ansiOutput($message, '34');
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        $formatted = "[$time] \033[34m$message\033[0m\n";
+        fwrite(STDOUT, $formatted);
     }
 
     private function ansiSuccess(string $message): void
     {
-        $this->ansiOutput($message, '32');
-    }
-
-    private function ansiOutput(string $message, string $colorCode, bool $useStderr = false): void
-    {
         $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
-        $formatted = "[$time] \033[{$colorCode}m$message\033[0m\n";
-        if ($useStderr) {
-            fwrite(STDERR, $formatted);
-        } else {
-            fwrite(STDOUT, $formatted);
-        }
+        $formatted = "[$time] \033[32m$message\033[0m\n";
+        fwrite(STDOUT, $formatted);
     }
 
     private function skopeo(string $args): ProcessResult
@@ -219,12 +215,6 @@ class Sync extends Command
         }
     }
 
-    private function syncImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, string $IMAGE_VERSION): void
-    {
-        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
-        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_VERSION);
-    }
-
     private function syncImageTag(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG): void
     {
         $start = Carbon::now();
@@ -236,7 +226,8 @@ class Sync extends Command
             $this->ansiError("Failed to sync image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         }
         $end = Carbon::now();
-        $duration = $end->diffInSeconds($start);
-        $this->ansiInfo("Time taken to sync $IMAGE_NAME:$IMAGE_TAG - $duration seconds");
+        $duration = $start->diffInSeconds($end);
+        $time = $end->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s');
+        echo "[$time] $IMAGE_NAME:$IMAGE_TAG took $duration seconds";
     }
 }
