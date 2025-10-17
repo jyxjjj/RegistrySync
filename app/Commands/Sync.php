@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Common\RequestHelper;
 use Illuminate\Contracts\Process\ProcessResult;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Process;
 use LaravelZero\Framework\Commands\Command;
 use Throwable;
@@ -45,13 +46,18 @@ class Sync extends Command
                     break;
                 case 4:
                     [$REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION] = $D;
-                    $this->checkAndSyncImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION);
+                    if ($this->checkImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION)) {
+                        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
+                        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_VERSION);
+                    } else {
+                        $this->ansiError("Failed to sync $IMAGE_NAME");
+                    }
                     break;
                 default:
                     $this->ansiError("Invalid image configuration: $image");
-                    echo str_repeat('-', 64) . "\n";
+                    echo str_repeat('=', 64) . "\n";
                     return self::INVALID;
-            };
+            }
             echo str_repeat('=', 64) . "\n";
         }
         $this->ansiInfo('Job completed, all images have been processed.');
@@ -60,65 +66,52 @@ class Sync extends Command
 
     private function ansiError(string $message): void
     {
-        $this->ansiOutput($message, '31', true);
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
+        $formatted = "[$time] \033[31m$message\033[0m\n";
+        fwrite(STDERR, $formatted);
     }
 
     private function ansiInfo(string $message): void
     {
-        $this->ansiOutput($message, '34', false);
-    }
-
-    private function ansiOutput(string $message, string $colorCode, bool $useStderr = false): void
-    {
-        $formatted = "\033[{$colorCode}m{$message}\033[0m\n";
-        if ($useStderr) {
-            fwrite(STDERR, $formatted);
-        } else {
-            fwrite(STDOUT, $formatted);
-        }
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
+        $formatted = "[$time] \033[34m$message\033[0m\n";
+        fwrite(STDOUT, $formatted);
     }
 
     private function ansiSuccess(string $message): void
     {
-        $this->ansiOutput($message, '32', false);
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
+        $formatted = "[$time] \033[32m$message\033[0m\n";
+        fwrite(STDOUT, $formatted);
     }
 
-    private function checkAndSyncImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, ?string $IMAGE_VERSION = null): void
+    private function echo(string $message): void
     {
-        if ($this->checkImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION)) {
-            $this->syncImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION);
-        } else {
-            $this->ansiError("Failed to sync $IMAGE_NAME");
-        }
+        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
+        $formatted = "[$time] $message\n";
+        fwrite(STDOUT, $formatted);
     }
 
-    private function checkImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, ?string $IMAGE_VERSION = null): bool
+    private function skopeo(string $args): ProcessResult
     {
-        if ($IMAGE_TAG === 'null' || $IMAGE_TAG === null) {
-            $this->ansiSuccess("$IMAGE_NAME:$IMAGE_VERSION is up to date.");
+        echo "> skopeo $args\n";
+        $args = explode(' ', "skopeo $args");
+        try {
+            $command = Process::newPendingProcess()->timeout(300);
+            $result = $command->run($args, function (string $type, string $buffer) use ($args) {
+                if ($args[1] == 'copy') {
+                    if ($type === 'stdout') {
+                        fwrite(STDOUT, $buffer);
+                    } else {
+                        fwrite(STDERR, $buffer);
+                    }
+                }
+            });
+        } catch (Throwable $e) {
+            $this->ansiError('Error executing skopeo command: ' . $e->getMessage());
+            return Process::run('exit 1');
         }
-        $L = $R = '';
-        $LResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
-        if ($LResult->successful()) {
-            $L = json_decode($LResult->output(), true)['Digest'];
-        } else {
-            $this->ansiError("Failed to fetch $IMAGE_NAME:$IMAGE_TAG.");
-            return false;
-        }
-        $RResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
-        if ($RResult->successful()) {
-            $R = json_decode($RResult->output(), true)['Digest'];
-        } else {
-            $this->ansiError("Failed to fetch $IMAGE_NAME:$IMAGE_VERSION.");
-            return false;
-        }
-        if ($L === $R) {
-            $this->ansiSuccess("$IMAGE_NAME:$IMAGE_VERSION is up to date.");
-            return true;
-        } else {
-            $this->ansiError("$IMAGE_NAME:$IMAGE_VERSION is outdated.");
-            return false;
-        }
+        return $result;
     }
 
     private function checkURL(string $url): bool
@@ -136,30 +129,23 @@ class Sync extends Command
         }
     }
 
-    private function fetchImages(): void
+    private function sortTags(array $tags): array
     {
-        foreach ($this->IMAGES as $id => &$image) {
-            if (str_contains($image, '[VERSION]')) {
-                $D = explode(' ', $image);
-                [$REGISTRY, $IMAGE_NAME, $IMAGE_TAG,] = $D;
-                $IMAGE_VERSION = $this->getVerionOf($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
-                if (empty($IMAGE_VERSION)) {
-                    $this->ansiError("Could not determine version for $IMAGE_NAME with tag $IMAGE_TAG.");
-                    unset($this->IMAGES[$id]);
-                    continue;
-                }
-                $image = str_replace('[VERSION]', $IMAGE_VERSION, $image);
+        foreach ($tags as $id => $tag) {
+            if (!preg_match('/^v?[0-9]+(\.[0-9]+){0,2}$/', $tag)) {
+                unset($tags[$id]);
             }
         }
-        $this->IMAGES = array_values($this->IMAGES);
+        $tags = array_values($tags);
+        usort($tags, fn($a, $b) => version_compare(ltrim($b, 'v'), ltrim($a, 'v')));
+        return $tags;
     }
 
     private function getDigestOf(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG): string
     {
         $result = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($result->successful()) {
-            $digest = json_decode($result->output(), true)['Digest'] ?? '';
-            return $digest;
+            return json_decode($result->output(), true)['Digest'] ?? '';
         } else {
             $this->ansiError("Failed to fetch digest for $IMAGE_NAME:$IMAGE_TAG from $REGISTRY.");
             return '';
@@ -187,57 +173,58 @@ class Sync extends Command
                     return $tag;
                 }
             }
-            return '';
         } else {
             $this->ansiError("Failed to fetch tags for $IMAGE_NAME from $REGISTRY.");
-            return '';
         }
+        return '';
     }
 
-    private function skopeo(string $args): ProcessResult
+    private function fetchImages(): void
     {
-        echo "> skopeo $args\n";
-        $args = explode(' ', "skopeo $args");
-        $command = Process::newPendingProcess();
-        $result = $command->run($args, function (string $type, string $buffer) use ($args) {
-            if ($args[1] == 'copy') {
-                if ($type === 'stdout') {
-                    fwrite(STDOUT, $buffer);
-                } else {
-                    fwrite(STDERR, $buffer);
+        foreach ($this->IMAGES as $id => &$image) {
+            if (str_contains($image, '[VERSION]')) {
+                $D = explode(' ', $image);
+                [$REGISTRY, $IMAGE_NAME, $IMAGE_TAG,] = $D;
+                $IMAGE_VERSION = $this->getVerionOf($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
+                if (empty($IMAGE_VERSION)) {
+                    $this->ansiError("Could not determine version for $IMAGE_NAME with tag $IMAGE_TAG.");
+                    unset($this->IMAGES[$id]);
+                    continue;
                 }
-            }
-        });
-        return $result;
-    }
-
-    private function sortTags(array $tags): array
-    {
-        foreach ($tags as $id => $tag) {
-            if (!preg_match('/^v?[0-9]+(\.[0-9]+){0,2}$/', $tag)) {
-                unset($tags[$id]);
+                $image = str_replace('[VERSION]', $IMAGE_VERSION, $image);
             }
         }
-        $tags = array_values($tags);
-        usort($tags, function ($a, $b) {
-            return version_compare(ltrim($b, 'v'), ltrim($a, 'v'));
-        });
-        return $tags;
+        $this->IMAGES = array_values($this->IMAGES);
     }
 
-    private function syncImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, ?string $IMAGE_VERSION = null): void
+    private function checkImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, string $IMAGE_VERSION): bool
     {
-        if ($IMAGE_TAG === 'null' || $IMAGE_TAG === null) {
-            $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_VERSION);
-            $this->tagImage($IMAGE_NAME, $IMAGE_VERSION, $IMAGE_VERSION);
+        $LResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
+        if ($LResult->successful()) {
+            $L = json_decode($LResult->output(), true)['Digest'];
         } else {
-            $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
-            $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_VERSION);
+            $this->ansiError("Failed to fetch $IMAGE_NAME:$IMAGE_TAG.");
+            return false;
+        }
+        $RResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
+        if ($RResult->successful()) {
+            $R = json_decode($RResult->output(), true)['Digest'];
+        } else {
+            $this->ansiError("Failed to fetch $IMAGE_NAME:$IMAGE_VERSION.");
+            return false;
+        }
+        if ($L === $R) {
+            $this->ansiSuccess("$IMAGE_NAME:$IMAGE_VERSION is up to date.");
+            return true;
+        } else {
+            $this->ansiError("$IMAGE_NAME:$IMAGE_VERSION is outdated.");
+            return false;
         }
     }
 
     private function syncImageTag(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG): void
     {
+        $start = Carbon::now();
         $this->ansiInfo("Syncing image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         $result = $this->skopeo("copy --dest-precompute-digests --preserve-digests --retry-times 10 --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG docker://$this->DESTINATION_REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($result->successful()) {
@@ -245,16 +232,8 @@ class Sync extends Command
         } else {
             $this->ansiError("Failed to sync image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         }
-    }
-
-    private function tagImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_VERSION): void
-    {
-        $this->ansiInfo("Tagging image: $REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
-        $result = $this->skopeo("copy --dest-precompute-digests --preserve-digests --retry-times 10 --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION docker://$this->DESTINATION_REGISTRY/$IMAGE_NAME:latest");
-        if ($result->successful()) {
-            $this->ansiSuccess("Successfully tagged image: $REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
-        } else {
-            $this->ansiError("Failed to tag image: $REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
-        }
+        $end = Carbon::now();
+        $duration = $start->diffInMilliseconds($end);
+        $this->echo("Sync completed, duration: {$duration} ms");
     }
 }

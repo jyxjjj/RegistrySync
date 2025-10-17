@@ -10,13 +10,11 @@ fi
 echo "Installing dependencies..."
 export HOMEBREW_NO_AUTO_UPDATE=1
 export HOMEBREW_DOWNLOAD_CONCURRENCY=8
-brew update >/dev/null 2>&1 &
+brew update >/dev/null 2>&1
 # brew upgrade >/dev/null 2>&1
-brew tap shivammathur/php >/dev/null 2>&1 &
-wait
-brew install skopeo shivammathur/php/php@8.4 >/dev/null 2>&1 &
-curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer >/dev/null 2>&1 &
-wait
+brew tap shivammathur/php >/dev/null 2>&1
+brew install skopeo shivammathur/php/php@8.4 >/dev/null 2>&1
+curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer >/dev/null 2>&1
 
 echo "Installed versions:"
 echo -n "Skopeo: "
