@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Common\RequestHelper;
 use Illuminate\Contracts\Process\ProcessResult;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Process;
 use LaravelZero\Framework\Commands\Command;
 use Throwable;
@@ -238,6 +239,7 @@ class Sync extends Command
 
     private function syncImageTag(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG): void
     {
+        $start = Carbon::now();
         $this->ansiInfo("Syncing image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         $result = $this->skopeo("copy --dest-precompute-digests --preserve-digests --retry-times 10 --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG docker://$this->DESTINATION_REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($result->successful()) {
@@ -245,10 +247,14 @@ class Sync extends Command
         } else {
             $this->ansiError("Failed to sync image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         }
+        $end = Carbon::now();
+        $duration = $end->diffInSeconds($start);
+        $this->ansiInfo("Time taken to sync $IMAGE_NAME:$IMAGE_TAG - {$duration} seconds");
     }
 
     private function tagImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_VERSION): void
     {
+        $start = Carbon::now();
         $this->ansiInfo("Tagging image: $REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
         $result = $this->skopeo("copy --dest-precompute-digests --preserve-digests --retry-times 10 --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION docker://$this->DESTINATION_REGISTRY/$IMAGE_NAME:latest");
         if ($result->successful()) {
@@ -256,5 +262,8 @@ class Sync extends Command
         } else {
             $this->ansiError("Failed to tag image: $REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
         }
+        $end = Carbon::now();
+        $duration = $end->diffInSeconds($start);
+        $this->ansiInfo("Time taken to tag $IMAGE_NAME:$IMAGE_VERSION - {$duration} seconds");
     }
 }
