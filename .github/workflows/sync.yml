@@ -2,8 +2,6 @@ name: sync
 
 on:
     schedule:
-        - cron: "0 16 * * *" # 00:00
-        - cron: "0 00 * * *" # 08:00
         - cron: "0 04 * * *" # 12:00
         - cron: "0 08 * * *" # 16:00
     workflow_dispatch:
