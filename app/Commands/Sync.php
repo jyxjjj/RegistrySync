@@ -111,11 +111,12 @@ class Sync extends Command
     private function sendNotification(): bool
     {
         try {
+            $messages = implode("\n", $this->MESSAGES);
             RequestHelper::getInstance(retry: 10, retryDelay: 100)
                 ->withHeaders([
                     $this->MESSAGE_TOKEN_NAME => $this->MESSAGE_TOKEN,
                 ])
-                ->post($this->MESSAGE_ENDPOINT_URL, ['text' => implode("\n", $this->MESSAGES)]);
+                ->post($this->MESSAGE_ENDPOINT_URL, ['text' => "<blockquote><code>$messages</code></blockquote>"]);
         } catch (Throwable) {
             return false;
         }
