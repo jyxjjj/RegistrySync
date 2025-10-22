@@ -7,18 +7,18 @@ if [ -z "$REGISTRY_URL" ]; then
     exit 1
 fi
 
+if [ -z "$MESSAGE_ENDPOINT_URL" ]; then
+    echo "Error: MESSAGE_ENDPOINT_URL 环境变量未设置！"
+    exit 1
+fi
+
 if [ -z "$MESSAGE_TOKEN_NAME" ]; then
     echo "Error: MESSAGE_TOKEN_NAME 环境变量未设置！"
     exit 1
 fi
 
-if [ -z "$MESSAGE_TOKEN_NAME" ]; then
-    echo "Error: MESSAGE_TOKEN_VALUE 环境变量未设置！"
-    exit 1
-fi
-
 if [ -z "$MESSAGE_TOKEN" ]; then
-    echo "Error: SOURCE_REPO 环境变量未设置！"
+    echo "Error: MESSAGE_TOKEN 环境变量未设置！"
     exit 1
 fi
 
