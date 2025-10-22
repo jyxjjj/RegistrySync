@@ -25,11 +25,17 @@ class Sync extends Command
         'docker.io openlistteam/openlist latest [VERSION]',
         'docker.io adguard/adguardhome latest [VERSION]',
     ];
+    private string $MESSAGE_ENDPOINT_URL;
+    private string $MESSAGE_TOKEN_NAME;
+    private string $MESSAGE_TOKEN;
+    private array $MESSAGES;
 
     public function handle(): int
     {
-        $REGISTRY_URL = env('REGISTRY_URL');
-        $this->DESTINATION_REGISTRY = $REGISTRY_URL;
+        $this->MESSAGE_ENDPOINT_URL = env('MESSAGE_ENDPOINT_URL');
+        $this->MESSAGE_TOKEN_NAME = env('MESSAGE_TOKEN_NAME');
+        $this->MESSAGE_TOKEN = env('MESSAGE_TOKEN');
+        $this->DESTINATION_REGISTRY = env('REGISTRY_URL');
         $check = $this->checkURL($this->DESTINATION_REGISTRY);
         if (!$check) {
             $this->ansiError('Registry URL check failed');
@@ -60,7 +66,12 @@ class Sync extends Command
             }
             echo str_repeat('=', 64) . "\n";
         }
-        $this->ansiInfo('Job completed, all images have been processed.');
+        $start = Carbon::createFromFormat('U.u', LARAVEL_START)->setTimezone('Etc/GMT-8');
+        $end = Carbon::now()->setTimezone('Etc/GMT-8');
+        $duration = $start->diffInMilliseconds($end);
+        $this->ansiInfo("Job completed, duration: $duration ms.");
+        $this->pushNotification("Total duration: $duration ms.");
+        $this->sendNotification();
         return self::SUCCESS;
     }
 
@@ -90,6 +101,26 @@ class Sync extends Command
         $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
         $formatted = "[$time] $message\n";
         fwrite(STDOUT, $formatted);
+    }
+
+    private function pushNotification(string $message): void
+    {
+        $this->MESSAGES[] = $message;
+    }
+
+    private function sendNotification(): bool
+    {
+        try {
+            $messages = implode("\n", $this->MESSAGES);
+            RequestHelper::getInstance(retry: 10, retryDelay: 100)
+                ->withHeaders([
+                    $this->MESSAGE_TOKEN_NAME => $this->MESSAGE_TOKEN,
+                ])
+                ->post($this->MESSAGE_ENDPOINT_URL, ['text' => "<blockquote><code>$messages</code></blockquote>"]);
+        } catch (Throwable) {
+            return false;
+        }
+        return true;
     }
 
     private function skopeo(string $args): ProcessResult
@@ -228,12 +259,16 @@ class Sync extends Command
         $this->ansiInfo("Syncing image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         $result = $this->skopeo("copy --dest-precompute-digests --preserve-digests --retry-times 10 --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG docker://$this->DESTINATION_REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($result->successful()) {
+            $str = '✅';
             $this->ansiSuccess("Successfully synced image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         } else {
+            $str = '❌';
             $this->ansiError("Failed to sync image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         }
         $end = Carbon::now();
         $duration = $start->diffInMilliseconds($end);
-        $this->echo("Sync completed, duration: {$duration} ms");
+        $this->echo("Sync completed, duration: $duration ms");
+        $name = $REGISTRY === 'docker.io' ? str_replace('library/', '', "$IMAGE_NAME:$IMAGE_TAG") : "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG";
+        $this->pushNotification("$str $name => $duration ms.");
     }
 }

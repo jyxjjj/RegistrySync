@@ -15,6 +15,9 @@ jobs:
             - name: Run Main
               env:
                   REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
+                  MESSAGE_ENDPOINT_URL: ${{ secrets.MESSAGE_ENDPOINT_URL }}
+                  MESSAGE_TOKEN_NAME: ${{ secrets.MESSAGE_TOKEN_NAME }}
+                  MESSAGE_TOKEN: ${{ secrets.MESSAGE_TOKEN }}
               run: |
                   sudo chmod +x sync.sh
                   ./sync.sh
