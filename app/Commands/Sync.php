@@ -32,11 +32,10 @@ class Sync extends Command
 
     public function handle(): int
     {
-        $REGISTRY_URL = env('REGISTRY_URL');
         $this->MESSAGE_ENDPOINT_URL = env('MESSAGE_ENDPOINT_URL');
-        $this->MESSAGE_TOKEN_NAME = env('TOKEN_NAME');
+        $this->MESSAGE_TOKEN_NAME = env('MESSAGE_TOKEN_NAME');
         $this->MESSAGE_TOKEN = env('MESSAGE_TOKEN');
-        $this->DESTINATION_REGISTRY = $REGISTRY_URL;
+        $this->DESTINATION_REGISTRY = env('REGISTRY_URL');
         $check = $this->checkURL($this->DESTINATION_REGISTRY);
         if (!$check) {
             $this->ansiError('Registry URL check failed');
