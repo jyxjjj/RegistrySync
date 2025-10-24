@@ -269,6 +269,6 @@ class Sync extends Command
         $duration = $start->diffInMilliseconds($end);
         $this->echo("Sync completed, duration: $duration ms");
         $name = $REGISTRY === 'docker.io' ? str_replace('library/', '', $IMAGE_NAME) : "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG";
-        $this->pushNotification("$name $str => $duration ms.");
+        $this->pushNotification("$str $name => $duration ms.");
     }
 }
