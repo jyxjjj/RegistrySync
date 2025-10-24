@@ -268,7 +268,7 @@ class Sync extends Command
         $end = Carbon::now();
         $duration = $start->diffInMilliseconds($end);
         $this->echo("Sync completed, duration: $duration ms");
-        $name = $REGISTRY === 'docker.io' ? str_replace('library/', '', $IMAGE_NAME) : "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG";
+        $name = $REGISTRY === 'docker.io' ? str_replace('library/', '', "$IMAGE_NAME:$IMAGE_TAG") : "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG";
         $this->pushNotification("$str $name => $duration ms.");
     }
 }
