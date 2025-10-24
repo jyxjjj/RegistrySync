@@ -259,15 +259,16 @@ class Sync extends Command
         $this->ansiInfo("Syncing image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         $result = $this->skopeo("copy --dest-precompute-digests --preserve-digests --retry-times 10 --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG docker://$this->DESTINATION_REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($result->successful()) {
-            $str = 'succeed';
+            $str = '✅';
             $this->ansiSuccess("Successfully synced image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         } else {
-            $str = 'failed';
+            $str = '❌';
             $this->ansiError("Failed to sync image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         }
         $end = Carbon::now();
         $duration = $start->diffInMilliseconds($end);
         $this->echo("Sync completed, duration: $duration ms");
-        $this->pushNotification("$REGISTRY/$IMAGE_NAME:$IMAGE_TAG sync $str in $duration ms.");
+        $name = $REGISTRY === 'docker.io' ? str_replace('library/', '', $IMAGE_NAME) : "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG";
+        $this->pushNotification("$name $str => $duration ms.");
     }
 }
