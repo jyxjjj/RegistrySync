@@ -34,6 +34,7 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 echo "Installed versions:"
 echo -n "Skopeo: "
 skopeo --version | awk '{print $3}'
+go version -v -m $(which skopeo) 2>&1 | grep 'build'
 echo -n "PHP: "
 php -v | head -n 1 | awk '{print $2}'
 echo -n "Composer: "
