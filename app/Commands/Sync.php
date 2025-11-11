@@ -6,15 +6,14 @@ use App\Common\RequestHelper;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Process;
-use LaravelZero\Framework\Commands\Command;
 use Throwable;
 
-class Sync extends Command
+class Sync extends BaseCommand
 {
     protected $signature = 'sync';
     protected $description = 'Sync container registries based on configuration';
 
-    private string $DESTINATION_REGISTRY;
+    private ?string $DESTINATION_REGISTRY;
     private array $IMAGES = [
         'docker.io library/fedora latest 43',
         'docker.io library/mariadb lts [VERSION]',
@@ -25,16 +24,9 @@ class Sync extends Command
         'docker.io openlistteam/openlist latest [VERSION]',
         'docker.io adguard/adguardhome latest [VERSION]',
     ];
-    private string $MESSAGE_ENDPOINT_URL;
-    private string $MESSAGE_TOKEN_NAME;
-    private string $MESSAGE_TOKEN;
-    private array $MESSAGES;
 
     public function handle(): int
     {
-        $this->MESSAGE_ENDPOINT_URL = env('MESSAGE_ENDPOINT_URL');
-        $this->MESSAGE_TOKEN_NAME = env('MESSAGE_TOKEN_NAME');
-        $this->MESSAGE_TOKEN = env('MESSAGE_TOKEN');
         $this->DESTINATION_REGISTRY = env('REGISTRY_URL');
         $check = $this->checkURL($this->DESTINATION_REGISTRY);
         if (!$check) {
@@ -75,54 +67,6 @@ class Sync extends Command
         return self::SUCCESS;
     }
 
-    private function ansiError(string $message): void
-    {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
-        $formatted = "[$time] \033[31m$message\033[0m\n";
-        fwrite(STDERR, $formatted);
-    }
-
-    private function ansiInfo(string $message): void
-    {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
-        $formatted = "[$time] \033[34m$message\033[0m\n";
-        fwrite(STDOUT, $formatted);
-    }
-
-    private function ansiSuccess(string $message): void
-    {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
-        $formatted = "[$time] \033[32m$message\033[0m\n";
-        fwrite(STDOUT, $formatted);
-    }
-
-    private function echo(string $message): void
-    {
-        $time = Carbon::now()->setTimezone('Etc/GMT-8')->format('Y-m-d H:i:s.v');
-        $formatted = "[$time] $message\n";
-        fwrite(STDOUT, $formatted);
-    }
-
-    private function pushNotification(string $message): void
-    {
-        $this->MESSAGES[] = $message;
-    }
-
-    private function sendNotification(): bool
-    {
-        try {
-            $messages = implode("\n", $this->MESSAGES);
-            RequestHelper::getInstance(retry: 10, retryDelay: 100)
-                ->withHeaders([
-                    $this->MESSAGE_TOKEN_NAME => $this->MESSAGE_TOKEN,
-                ])
-                ->post($this->MESSAGE_ENDPOINT_URL, ['text' => "<blockquote><code>$messages</code></blockquote>"]);
-        } catch (Throwable) {
-            return false;
-        }
-        return true;
-    }
-
     private function skopeo(string $args): ProcessResult
     {
         echo "> skopeo $args\n";
@@ -145,8 +89,12 @@ class Sync extends Command
         return $result;
     }
 
-    private function checkURL(string $url): bool
+    private function checkURL(?string $url): bool
     {
+        if (empty($url)) {
+            $this->ansiError('Registry URL is not set.');
+            return false;
+        }
         try {
             $resp = RequestHelper::getInstance(10, 30)->get("https://$url/v2/_catalog");
             $statusCode = $resp->status();

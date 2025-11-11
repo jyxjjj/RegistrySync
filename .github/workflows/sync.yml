@@ -12,6 +12,10 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+            - name: Install Dependencies
+              run: |
+                  chmod +x deps.sh
+                  ./deps.sh
             - name: Run Main
               env:
                   REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
