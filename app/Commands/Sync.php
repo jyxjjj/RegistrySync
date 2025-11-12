@@ -183,6 +183,7 @@ class Sync extends BaseCommand
             $L = json_decode($LResult->output(), true)['Digest'];
         } else {
             $this->ansiError("Failed to fetch $IMAGE_NAME:$IMAGE_TAG.");
+            $this->pushNotification("⚠️ Failed to fetch $IMAGE_NAME:$IMAGE_TAG.");
             return false;
         }
         $RResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
@@ -190,13 +191,17 @@ class Sync extends BaseCommand
             $R = json_decode($RResult->output(), true)['Digest'];
         } else {
             $this->ansiError("Failed to fetch $IMAGE_NAME:$IMAGE_VERSION.");
+            $this->pushNotification("⚠️ Failed to fetch $IMAGE_NAME:$IMAGE_VERSION.");
             return false;
         }
         if ($L === $R) {
             $this->ansiSuccess("$IMAGE_NAME:$IMAGE_VERSION is up to date.");
             return true;
         } else {
-            $this->ansiError("$IMAGE_NAME:$IMAGE_VERSION is outdated.");
+            $name1 = $REGISTRY === 'docker.io' ? str_replace('library/', '', "$IMAGE_NAME:$IMAGE_VERSION") : "$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION";
+            $name2 = $REGISTRY === 'docker.io' ? str_replace('library/', '', "$IMAGE_NAME:$IMAGE_TAG") : "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG";
+            $this->ansiError("$IMAGE_NAME:$IMAGE_VERSION mismatch with $IMAGE_NAME:$IMAGE_TAG.");
+            $this->pushNotification("⚠️ $name1 mismatch with $name2.");
             return false;
         }
     }
