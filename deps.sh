@@ -12,9 +12,12 @@ brew tap shivammathur/php >/dev/null 2>&1
 
 brew install skopeo shivammathur/php/php >/dev/null 2>&1
 
-[ ! -f /usr/local/bin/composer ] && curl -fSsL https://getcomposer.org/composer.phar -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer
+[ ! -f /usr/local/bin/composer ] &&
+    curl -fSsL https://getcomposer.org/composer.phar -o /usr/local/bin/composer &&
+    chown root:wheel /usr/local/bin/composer &&
+    chmod +x /usr/local/bin/composer
 
-composer self-update >/dev/null 2>&1
+sudo composer self-update >/dev/null 2>&1
 
 echo "Installed versions:"
 echo -n "Skopeo: "
