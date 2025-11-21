@@ -12,6 +12,8 @@ brew tap shivammathur/php >/dev/null 2>&1
 
 brew install skopeo shivammathur/php/php@8.4 >/dev/null 2>&1
 
+echo $PATH
+
 [ ! -f /usr/local/bin/composer ] && curl -fSsL https://getcomposer.org/composer.phar -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
 echo "Installed versions:"
@@ -21,3 +23,5 @@ echo -n "PHP: "
 php -v | head -n 1 | awk '{print $2}'
 echo -n "Composer: "
 composer --version 2>&1 | head -n 1 | awk '{print $3}'
+
+exit 127
