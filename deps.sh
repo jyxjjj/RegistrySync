@@ -10,7 +10,7 @@ export HOMEBREW_DOWNLOAD_CONCURRENCY=8
 brew update >/dev/null 2>&1
 brew tap shivammathur/php >/dev/null 2>&1
 
-brew install skopeo shivammathur/php/php@8.4 >/dev/null 2>&1
+brew install skopeo shivammathur/php/php@8.5 >/dev/null 2>&1
 
 echo $PATH
 
