@@ -2,9 +2,9 @@
     "name": "desmg/registry-sync",
     "type": "project",
     "require": {
-        "php": "^8.4",
-        "illuminate/http": "^12.17",
-        "laravel-zero/framework": "^12.0.2"
+        "php": "^8.5",
+        "illuminate/http": "^12.39.0",
+        "laravel-zero/framework": "^12.0.3"
     },
     "require-dev": {},
     "autoload": {

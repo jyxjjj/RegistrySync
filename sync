@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-if (PHP_MAJOR_VERSION != 8 || PHP_MINOR_VERSION != 4) {
+if (PHP_MAJOR_VERSION != 8 || PHP_MINOR_VERSION != 5) {
     echo "PHP Version Mismatch\n";
     exit(130);
 }
