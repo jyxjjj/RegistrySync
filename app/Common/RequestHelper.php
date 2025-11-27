@@ -22,7 +22,7 @@ class RequestHelper
                 'force_ip_resolve' => 'v4',
             ])
             ->withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Macintosh; Apple Mac OS X 26_0_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 DESMG-Web-Client/2.4',
+                'User-Agent' => 'Mozilla/5.0 (Macintosh; Apple macOS 26_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/142.0.0.0 DESMG-Web-Client/2.4',
             ])
             ->withOptions($options)
             ->connectTimeout($connectTimeout)
