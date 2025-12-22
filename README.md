@@ -14,4 +14,4 @@ IDs, etc.,
 
 This repository will be recreated irregularly.
 
-[Recreate Status](https://img.shields.io/badge/Recreated-2025--12--22-FFA000?style=flat-square&logo=github)
+![Recreate Status](https://img.shields.io/badge/Recreated-2025--12--22-FFA000?style=flat-square&logo=github)
