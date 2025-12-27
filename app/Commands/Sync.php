@@ -23,7 +23,7 @@ class Sync extends BaseCommand
         'docker.io openlistteam/openlist beta',
         'docker.io openlistteam/openlist latest [VERSION]',
         'docker.io adguard/adguardhome latest [VERSION]',
-        'ghcr.io xiaomi/miloco-backend latest [VERSION]',
+        'ghcr.io xiaomi/miloco-backend latest v0.1.2',
     ];
 
     public function handle(): int

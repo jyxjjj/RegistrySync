@@ -29,3 +29,4 @@ fi
 echo "Start sync..."
 composer install --no-interaction --no-ansi --no-dev --optimize-autoloader >/dev/null 2>&1
 php sync
+skopeo logout ghcr.io
