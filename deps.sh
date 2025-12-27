@@ -26,3 +26,5 @@ echo -n "PHP: "
 php -v | head -n 1 | awk '{print $2}'
 echo -n "Composer: "
 composer --version 2>&1 | head -n 1 | awk '{print $3}'
+
+skopeo login ghcr.io -u "${GITHUB_ACTOR}" -p "${GHCR_TOKEN}"

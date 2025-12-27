@@ -12,16 +12,16 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-            - name: Install Dependencies
-              run: |
-                  chmod +x deps.sh
-                  ./deps.sh
             - name: Run Main
               env:
                   REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
                   MESSAGE_ENDPOINT_URL: ${{ secrets.MESSAGE_ENDPOINT_URL }}
                   MESSAGE_TOKEN_NAME: ${{ secrets.MESSAGE_TOKEN_NAME }}
                   MESSAGE_TOKEN: ${{ secrets.MESSAGE_TOKEN }}
+                  GITHUB_ACTOR: ${{ github.actor }}
+                  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
               run: |
-                  sudo chmod +x sync.sh
+                  chmod +x deps.sh
+                  chmod +x sync.sh
+                  ./deps.sh
                   ./sync.sh
