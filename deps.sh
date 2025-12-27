@@ -2,6 +2,18 @@
 
 set -e
 
+if [ -z "$GITHUB_ACTOR" ]; then
+    echo "Error: GITHUB_ACTOR 环境变量未设置！"
+    echo "Example: 'GITHUB_ACTOR=jyxjjj'."
+    exit 1
+fi
+
+if [ -z "$GHCR_TOKEN" ]; then
+    echo "Error: GHCR_TOKEN 环境变量未设置！"
+    echo "Example: 'GHCR_TOKEN=xxx_xxxxxxxxxxxxxxxx'."
+    exit 1
+fi
+
 echo "Installing dependencies..."
 
 export HOMEBREW_NO_AUTO_UPDATE=1
