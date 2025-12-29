@@ -19,17 +19,17 @@ echo "Installing dependencies..."
 export HOMEBREW_NO_AUTO_UPDATE=1
 export HOMEBREW_DOWNLOAD_CONCURRENCY=8
 
-brew update >/dev/null
-brew tap shivammathur/php >/dev/null
+brew update
+brew tap shivammathur/php
 
-brew install skopeo shivammathur/php/php >/dev/null
+brew install skopeo shivammathur/php/php
 
 [ ! -f /usr/local/bin/composer ] &&
     curl -fSsL https://getcomposer.org/composer.phar -o /usr/local/bin/composer &&
     sudo chown root:wheel /usr/local/bin/composer &&
     sudo chmod +x /usr/local/bin/composer
 
-sudo composer self-update >/dev/null
+sudo composer self-update
 
 echo "Installed versions:"
 echo -n "Skopeo: "
