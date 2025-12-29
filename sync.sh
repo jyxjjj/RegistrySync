@@ -27,6 +27,6 @@ if [ -z "$MESSAGE_TOKEN" ]; then
 fi
 
 echo "Start sync..."
-composer install --no-interaction --no-ansi --no-dev --optimize-autoloader >/dev/null 2>&1
+composer install --no-interaction --no-ansi --no-dev --optimize-autoloader >/dev/null
 php sync
 skopeo logout ghcr.io
