@@ -21,7 +21,5 @@ jobs:
                   GITHUB_ACTOR: ${{ github.actor }}
                   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
               run: |
-                  chmod +x deps.sh
                   chmod +x sync.sh
-                  ./deps.sh
                   ./sync.sh
