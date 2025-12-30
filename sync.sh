@@ -56,7 +56,7 @@ brew install skopeo shivammathur/php/php
 sudo composer self-update
 
 mkdir -p ./.composer/cache
-composer config --cache-dir ./.composer/cache
+composer config cache-dir ./.composer/cache
 composer install \
     --no-interaction \
     --prefer-dist \
