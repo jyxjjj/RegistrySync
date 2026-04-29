@@ -16,7 +16,7 @@ class Sync extends BaseCommand
     private ?string $DESTINATION_REGISTRY;
     private array $IMAGES = [
         'docker.io library/alpine latest [VERSION]',
-        'docker.io library/fedora latest 43',
+        'docker.io library/fedora latest 44',
         'docker.io library/mariadb lts [VERSION]',
         'docker.io library/redis latest [VERSION]',
         'docker.io library/postgres latest [VERSION]',
