@@ -44,9 +44,9 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 export HOMEBREW_DOWNLOAD_CONCURRENCY=8
 
 brew update
-brew tap shivammathur/php
+brew tap shivammathur/php@8.4
 
-brew install skopeo shivammathur/php/php
+brew install skopeo shivammathur/php/php@8.4
 
 [ ! -f /usr/local/bin/composer ] &&
     curl -fSsL https://getcomposer.org/composer.phar -o /usr/local/bin/composer &&

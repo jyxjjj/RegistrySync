@@ -180,6 +180,12 @@ class Sync extends BaseCommand
 
     private function checkImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, string $IMAGE_VERSION): bool
     {
+        $shortName = basename($IMAGE_NAME);
+        if ($shortName === 'alpine' && preg_match('/^\d{6,}$/', $IMAGE_VERSION)) {
+            $this->ansiError("$IMAGE_NAME:$IMAGE_VERSION mismatch with $IMAGE_NAME:$IMAGE_TAG.");
+            return false;
+        }
+
         $LResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($LResult->successful()) {
             $L = json_decode($LResult->output(), true)['Digest'];
