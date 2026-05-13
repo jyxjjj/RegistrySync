@@ -24,6 +24,7 @@ class Sync extends BaseCommand
         'docker.io openlistteam/openlist beta',
         'docker.io openlistteam/openlist latest [VERSION]',
         'docker.io adguard/adguardhome latest [VERSION]',
+        'docker.io vaultwarden/server latest [VERSION]',
     ];
 
     public function handle(): int
