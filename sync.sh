@@ -48,10 +48,16 @@ brew tap shivammathur/php
 
 brew install skopeo shivammathur/php/php@8.4
 
-[ ! -f /usr/local/bin/composer ] &&
-    curl -fSsL https://getcomposer.org/composer.phar -o /usr/local/bin/composer &&
-    sudo chown root:wheel /usr/local/bin/composer &&
-    sudo chmod +x /usr/local/bin/composer
+sudo rm -f /usr/local/bin/composer
+
+curl -fSsL \
+    --retry 5 \
+    --retry-all-errors \
+    --retry-delay 1 \
+    https://getcomposer.org/composer.phar \
+    -o /usr/local/bin/composer
+sudo chown root:wheel /usr/local/bin/composer
+sudo chmod +x /usr/local/bin/composer
 
 sudo composer self-update
 
@@ -70,7 +76,7 @@ echo -n "PHP: "
 php -v | head -n 1 | awk '{print $2}'
 echo -n "Composer: "
 composer --version 2>&1 | head -n 1 | awk '{print $3}'
-echo "-n Vendor packages: "
+echo -n "Vendor packages: "
 composer show
 
 skopeo login ghcr.io -u "${GITHUB_ACTOR}" -p "${GHCR_TOKEN}"
