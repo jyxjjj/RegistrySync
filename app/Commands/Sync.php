@@ -71,12 +71,12 @@ class Sync extends BaseCommand
 
     private function skopeo(string $args): ProcessResult
     {
-        echo "> skopeo $args\n";
-        $args = explode(' ', "skopeo $args");
+        echo "> skopeo --insecure-policy $args\n";
+        $args = explode(' ', "skopeo --insecure-policy $args");
         try {
             $command = Process::newPendingProcess()->timeout(300);
             $result = $command->run($args, function (string $type, string $buffer) use ($args) {
-                if ($args[1] == 'copy') {
+                if ($args[2] == 'copy') {
                     if ($type === 'stdout') {
                         fwrite(STDOUT, $buffer);
                     } else {
