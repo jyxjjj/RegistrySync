@@ -45,6 +45,7 @@ export HOMEBREW_DOWNLOAD_CONCURRENCY=8
 
 brew update
 brew tap shivammathur/php
+brew trust shivammathur/php
 
 brew install skopeo shivammathur/php/php@8.4
 
