@@ -47,7 +47,9 @@ class Sync extends BaseCommand
                 case 4:
                     [$REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION] = $D;
                     if ($this->checkImage($REGISTRY, $IMAGE_NAME, $IMAGE_TAG, $IMAGE_VERSION)) {
-                        $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
+                        if ($IMAGE_TAG !== 'latest') {
+                            $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
+                        }
                         $this->syncImageTag($REGISTRY, $IMAGE_NAME, $IMAGE_VERSION);
                     } else {
                         $this->ansiError("Failed to sync $IMAGE_NAME");
