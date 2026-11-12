@@ -120,13 +120,18 @@ class Sync extends BaseCommand
             }
         }
         $tags = array_values($tags);
-        usort($tags, fn($a, $b) => version_compare(ltrim($b, 'v'), ltrim($a, 'v')));
+        usort($tags, function ($a, $b) {
+            $aVersion = implode('.', array_pad(explode('.', ltrim($a, 'v')), 3, '0'));
+            $bVersion = implode('.', array_pad(explode('.', ltrim($b, 'v')), 3, '0'));
+            return version_compare($bVersion, $aVersion)
+                ?: substr_count($b, '.') <=> substr_count($a, '.');
+        });
         return $tags;
     }
 
     private function getDigestOf(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG): string
     {
-        $result = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
+        $result = $this->skopeo("inspect --no-tags --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($result->successful()) {
             return json_decode($result->output(), true)['Digest'] ?? '';
         } else {
@@ -138,13 +143,15 @@ class Sync extends BaseCommand
     private function getVerionOf(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG): string
     {
         $this->ansiInfo("Determining version for $IMAGE_NAME with tag $IMAGE_TAG...");
-        $targetDigest = $this->getDigestOf($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
-        if (empty($targetDigest)) {
-            $this->ansiError("Could not determine digest for $IMAGE_NAME with tag $IMAGE_TAG.");
-            return '';
+        if ($IMAGE_TAG !== 'latest') {
+            $targetDigest = $this->getDigestOf($REGISTRY, $IMAGE_NAME, $IMAGE_TAG);
+            if (empty($targetDigest)) {
+                $this->ansiError("Could not determine digest for $IMAGE_NAME with tag $IMAGE_TAG.");
+                return '';
+            }
+            $this->ansiInfo("Target digest for $IMAGE_NAME:$IMAGE_TAG is $targetDigest");
         }
-        $this->ansiInfo("Target digest for $IMAGE_NAME:$IMAGE_TAG is $targetDigest");
-        $this->ansiInfo("Fetching all tags for $IMAGE_NAME from $REGISTRY to find matching digest...");
+        $this->ansiInfo("Fetching all tags for $IMAGE_NAME from $REGISTRY...");
         $IMAGE_ALL_TAGS = $this->skopeo("list-tags docker://$REGISTRY/$IMAGE_NAME");
         if ($IMAGE_ALL_TAGS->successful()) {
             $tagsJson = $IMAGE_ALL_TAGS->output();
@@ -152,6 +159,13 @@ class Sync extends BaseCommand
             $tags = $this->sortTags($tags);
             foreach ($tags as $tag) {
                 if (basename($IMAGE_NAME) === 'alpine' && preg_match('/^\d{6,}$/', $tag)) {
+                    continue;
+                }
+
+                if ($IMAGE_TAG === 'latest') {
+                    if (str_contains($tag, '.')) {
+                        return $tag;
+                    }
                     continue;
                 }
 
@@ -178,7 +192,11 @@ class Sync extends BaseCommand
                     unset($this->IMAGES[$id]);
                     continue;
                 }
-                $image = str_replace('[VERSION]', $IMAGE_VERSION, $image);
+                if ($IMAGE_TAG === 'latest') {
+                    $image = "$REGISTRY $IMAGE_NAME $IMAGE_VERSION";
+                } else {
+                    $image = str_replace('[VERSION]', $IMAGE_VERSION, $image);
+                }
             }
         }
         $this->IMAGES = array_values($this->IMAGES);
@@ -186,7 +204,7 @@ class Sync extends BaseCommand
 
     private function checkImage(string $REGISTRY, string $IMAGE_NAME, string $IMAGE_TAG, string $IMAGE_VERSION): bool
     {
-        $LResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
+        $LResult = $this->skopeo("inspect --no-tags --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_TAG");
         if ($LResult->successful()) {
             $L = json_decode($LResult->output(), true)['Digest'];
         } else {
@@ -194,7 +212,7 @@ class Sync extends BaseCommand
             $this->pushNotification("⚠️ Failed to fetch $IMAGE_NAME:$IMAGE_TAG.");
             return false;
         }
-        $RResult = $this->skopeo("inspect --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
+        $RResult = $this->skopeo("inspect --no-tags --override-arch amd64 --override-os linux docker://$REGISTRY/$IMAGE_NAME:$IMAGE_VERSION");
         if ($RResult->successful()) {
             $R = json_decode($RResult->output(), true)['Digest'];
         } else {
